@@ -1,0 +1,1 @@
+# automat-do-napojow-goracych
