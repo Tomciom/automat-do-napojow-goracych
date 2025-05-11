@@ -62,7 +62,7 @@ Poniżej przedstawiono diagram komponentów systemu automatu do gorących napoj�
 
 # Bibliografia:
 
-1.  SAE International. *AS5506D: Architecture Analysis & Design Language (AADL)*. Kwiecień 2022. Dostępne: `https://www.sae.org/standards/content/as5506/`
-2.  Feiler, P. H., Gluch, D. P., & Hudak, J. J. *Model-Based Engineering with AADL: An Introduction to the SAE Architecture Analysis & Design Language*. Addison-Wesley Professional, Wrzesień 2012. Dostępne: `https://www.amazon.com/Model-Based-Engineering-AADL-Introduction-Architecture/dp/0134208897`
-3.  Software Engineering Institute, Carnegie Mellon University. *Architecture Analysis and Design Language (AADL)*. Dostępne: `https://insights.sei.cmu.edu/projects/architecture-analysis-and-design-language-aadl/`
-4.  *EP1321908A2: Vending machine control system*. Zgłoszony 18 grudnia 2002. Dostępne: `https://patents.google.com/patent/EP1321908A2/en`
+1.  SAE International. *AS5506D: Architecture Analysis & Design Language (AADL)*. Kwiecień 2022. `https://www.sae.org/standards/content/as5506/`
+2.  Feiler, P. H., Gluch, D. P., & Hudak, J. J. *Model-Based Engineering with AADL: An Introduction to the SAE Architecture Analysis & Design Language*. Addison-Wesley Professional, Wrzesień 2012. `https://www.amazon.com/Model-Based-Engineering-AADL-Introduction-Architecture/dp/0134208897`
+3.  Software Engineering Institute, Carnegie Mellon University. *Architecture Analysis and Design Language (AADL)*. `https://insights.sei.cmu.edu/projects/architecture-analysis-and-design-language-aadl/`
+4.  *EP1321908A2: Vending machine control system*. Zgłoszony 18 grudnia 2002. `https://patents.google.com/patent/EP1321908A2/en`
