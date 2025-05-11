@@ -1,0 +1,327 @@
+package vending_machine
+public
+  with Base_Types;      -- Zakładamy, że dostarcza typy takie jak Boolean, Integer
+  with Data_Model;      -- Zakładamy, że dostarcza definicję dla Data_Representation
+
+  -- ==== DATA TYPES ====
+
+  data BeverageOrderData   -- Dane dotyczące zamówionego napoju (np. typ, cukier)
+    properties
+      Data_Model::Data_Representation => Struct;
+  end BeverageOrderData;
+
+  data PaymentInfoData     -- Dane dotyczące statusu płatności
+    properties
+      Data_Model::Data_Representation => Struct;
+  end PaymentInfoData;
+
+  data WaterConditionData  -- Dane o stanie wody (np. temperatura)
+    properties
+      Data_Model::Data_Representation => Struct;
+  end WaterConditionData;
+
+  data InventoryStatusData -- Dane o stanie zapasów (kubki, składniki)
+    properties
+      Data_Model::Data_Representation => Struct;
+  end InventoryStatusData;
+
+  data MachineDisplayData  -- Dane do wyświetlenia na ekranie automatu
+    properties
+      Data_Model::Data_Representation => Struct;
+  end MachineDisplayData;
+
+  data ExternalCommandData -- Komendy przychodzące z sieci
+    properties
+      Data_Model::Data_Representation => Struct;
+  end ExternalCommandData;
+
+  data OutgoingNetworkData -- Pakiety wysyłane przez sieć (np. status, alerty)
+    properties
+      Data_Model::Data_Representation => Struct;
+  end OutgoingNetworkData;
+
+  -- ==== DEVICES ====
+
+  device UserSelectionPanel
+    features
+      order_details_out: out data port BeverageOrderData;
+  end UserSelectionPanel;
+
+  device PaymentTerminalDevice
+    features
+      payment_status_out: out data port PaymentInfoData;
+      initiate_payment_in: in data port Base_Types::Boolean; -- Sygnał do rozpoczęcia transakcji
+  end PaymentTerminalDevice;
+
+  device WaterTemperatureSensorDevice
+    features
+      current_temp_out: out data port WaterConditionData;
+  end WaterTemperatureSensorDevice;
+
+  device HeaterActuatorDevice
+    features
+      heater_control_in: in data port Base_Types::Boolean; -- Włącz/Wyłącz grzałkę
+  end HeaterActuatorDevice;
+
+  device DispensingMechanismDevice -- Urządzenie do dozowania składników i kubka
+    features
+      dispense_ingredient_cmd_in: in data port BeverageOrderData; -- Komenda z typem napoju/składników
+      dispense_cup_cmd_in: in data port Base_Types::Boolean;      -- Komenda wydania kubka
+  end DispensingMechanismDevice;
+
+  device InventorySensorDevice -- Czujnik poziomu zapasów (kubki, składniki)
+    features
+      inventory_levels_out: out data port InventoryStatusData;
+  end InventorySensorDevice;
+
+  device MachineDisplay
+    features
+      display_update_in: in data port MachineDisplayData;
+  end MachineDisplay;
+
+  device NetworkInterfaceModule
+    features
+      command_from_network_out: out data port ExternalCommandData;
+      status_to_network_in: in data port OutgoingNetworkData;
+  end NetworkInterfaceModule;
+
+  -- ==== THREADS ====
+
+  thread UserInputMonitorThread
+    features
+      selection_panel_signal_in: in data port BeverageOrderData; -- Odczyt z panelu
+      processed_order_out: out data port BeverageOrderData;     -- Przetworzone zamówienie
+  end UserInputMonitorThread;
+
+  thread implementation UserInputMonitorThread.impl
+    properties
+      Dispatch_Protocol => Periodic;
+      Period => 500ms;
+  end UserInputMonitorThread.impl;
+
+  thread PaymentStatusMonitorThread
+    features
+      payment_terminal_signal_in: in data port PaymentInfoData; -- Odczyt z terminala
+      confirmed_payment_out: out data port PaymentInfoData;   -- Potwierdzona informacja o płatności
+  end PaymentStatusMonitorThread;
+
+  thread implementation PaymentStatusMonitorThread.impl
+    properties
+      Dispatch_Protocol => Periodic;
+      Period => 500ms;
+  end PaymentStatusMonitorThread.impl;
+
+  thread WaterTemperatureMonitorThread
+    features
+      temp_sensor_reading_in: in data port WaterConditionData; -- Odczyt z czujnika temperatury
+      current_water_temp_out: out data port WaterConditionData; -- Przekazanie aktualnej temperatury
+  end WaterTemperatureMonitorThread;
+
+  thread implementation WaterTemperatureMonitorThread.impl
+    properties
+      Dispatch_Protocol => Periodic;
+      Period => 1000ms;
+  end WaterTemperatureMonitorThread.impl;
+
+  thread InventoryLevelMonitorThread
+    features
+      inventory_sensor_reading_in: in data port InventoryStatusData; -- Odczyt z czujników zapasów
+      current_inventory_status_out: out data port InventoryStatusData; -- Przekazanie stanu zapasów
+  end InventoryLevelMonitorThread;
+
+  thread implementation InventoryLevelMonitorThread.impl
+    properties
+      Dispatch_Protocol => Periodic;
+      Period => 2000ms;
+  end InventoryLevelMonitorThread.impl;
+
+  thread NetworkCommandReceiverThread
+    features
+      command_from_network_in: in data port ExternalCommandData; -- Komenda z modułu sieciowego
+      internal_command_out: out data port ExternalCommandData;   -- Przekazanie komendy do logiki
+  end NetworkCommandReceiverThread;
+
+  thread implementation NetworkCommandReceiverThread.impl
+    properties
+      Dispatch_Protocol => Periodic;  -- Lub Aperiodic, jeśli komendy są rzadkie
+      Period => 1000ms;
+  end NetworkCommandReceiverThread.impl;
+
+  thread VendingControlLogicThread
+    features
+      -- Wejścia z monitorów i innych źródeł
+      order_in: in data port BeverageOrderData;
+      payment_status_in: in data port PaymentInfoData;
+      water_temp_in: in data port WaterConditionData;
+      inventory_status_in: in data port InventoryStatusData;
+      network_command_in: in data port ExternalCommandData;
+
+      -- Wyjścia do aktuatorów i interfejsów
+      heater_cmd_out: out data port Base_Types::Boolean;
+      dispense_ingredient_cmd_out: out data port BeverageOrderData;
+      dispense_cup_cmd_out: out data port Base_Types::Boolean;
+      display_message_out: out data port MachineDisplayData;
+      network_status_packet_out: out data port OutgoingNetworkData;
+      initiate_payment_out: out data port Base_Types::Boolean; -- Sygnał do terminala płatniczego
+  end VendingControlLogicThread;
+
+  thread implementation VendingControlLogicThread.impl
+    properties
+      Dispatch_Protocol => Periodic;
+      Period => 500ms;
+  end VendingControlLogicThread.impl;
+
+  -- ==== PROCESSES ====
+
+  process InputSensingProcess -- Proces zbierający dane z sensorów i wejść użytkownika
+    features
+      -- Wejścia z urządzeń
+      raw_order_in: in data port BeverageOrderData;
+      raw_payment_info_in: in data port PaymentInfoData;
+      raw_water_temp_in: in data port WaterConditionData;
+      raw_inventory_levels_in: in data port InventoryStatusData;
+      -- Wyjścia do głównej logiki
+      processed_order_to_logic_out: out data port BeverageOrderData;
+      payment_info_to_logic_out: out data port PaymentInfoData;
+      water_temp_to_logic_out: out data port WaterConditionData;
+      inventory_status_to_logic_out: out data port InventoryStatusData;
+  end InputSensingProcess;
+
+  process implementation InputSensingProcess.impl
+    subcomponents
+      user_monitor: thread UserInputMonitorThread.impl;
+      payment_monitor: thread PaymentStatusMonitorThread.impl;
+      temp_monitor: thread WaterTemperatureMonitorThread.impl;
+      inventory_monitor: thread InventoryLevelMonitorThread.impl;
+    connections
+      conn_order_panel_to_monitor: port raw_order_in -> user_monitor.selection_panel_signal_in;
+      conn_order_monitor_to_logic: port user_monitor.processed_order_out -> processed_order_to_logic_out;
+
+      conn_payment_terminal_to_monitor: port raw_payment_info_in -> payment_monitor.payment_terminal_signal_in;
+      conn_payment_monitor_to_logic: port payment_monitor.confirmed_payment_out -> payment_info_to_logic_out;
+
+      conn_temp_sensor_to_monitor: port raw_water_temp_in -> temp_monitor.temp_sensor_reading_in;
+      conn_temp_monitor_to_logic: port temp_monitor.current_water_temp_out -> water_temp_to_logic_out;
+
+      conn_inventory_sensor_to_monitor: port raw_inventory_levels_in -> inventory_monitor.inventory_sensor_reading_in;
+      conn_inventory_monitor_to_logic: port inventory_monitor.current_inventory_status_out -> inventory_status_to_logic_out;
+  end InputSensingProcess.impl;
+
+
+  process MainControlExecutionProcess -- Proces wykonujący główną logikę sterowania i komunikację
+    features
+      -- Wejścia od procesu zbierania danych i modułu sieciowego
+      order_from_sensor_process_in: in data port BeverageOrderData;
+      payment_from_sensor_process_in: in data port PaymentInfoData;
+      water_temp_from_sensor_process_in: in data port WaterConditionData;
+      inventory_from_sensor_process_in: in data port InventoryStatusData;
+      command_from_network_module_in: in data port ExternalCommandData;
+
+      -- Wyjścia do aktuatorów i interfejsów
+      heater_actuator_cmd_out: out data port Base_Types::Boolean;
+      dispenser_ingredient_cmd_out: out data port BeverageOrderData;
+      dispenser_cup_cmd_out: out data port Base_Types::Boolean;
+      display_update_cmd_out: out data port MachineDisplayData;
+      network_packet_to_module_out: out data port OutgoingNetworkData;
+      trigger_payment_out: out data port Base_Types::Boolean;
+  end MainControlExecutionProcess;
+
+  process implementation MainControlExecutionProcess.impl
+    subcomponents
+      control_logic: thread VendingControlLogicThread.impl;
+      network_receiver: thread NetworkCommandReceiverThread.impl;
+    connections
+      -- Połączenia danych wejściowych do głównej pętli sterowania
+      conn_order_to_ctrl_logic: port order_from_sensor_process_in -> control_logic.order_in;
+      conn_payment_to_ctrl_logic: port payment_from_sensor_process_in -> control_logic.payment_status_in;
+      conn_temp_to_ctrl_logic: port water_temp_from_sensor_process_in -> control_logic.water_temp_in;
+      conn_inventory_to_ctrl_logic: port inventory_from_sensor_process_in -> control_logic.inventory_status_in;
+      
+      -- Połączenia dla komend sieciowych
+      conn_net_cmd_to_receiver: port command_from_network_module_in -> network_receiver.command_from_network_in;
+      conn_receiver_to_ctrl_logic: port network_receiver.internal_command_out -> control_logic.network_command_in;
+
+      -- Połączenia danych wyjściowych z głównej pętli sterowania
+      conn_ctrl_logic_to_heater: port control_logic.heater_cmd_out -> heater_actuator_cmd_out;
+      conn_ctrl_logic_to_disp_ing: port control_logic.dispense_ingredient_cmd_out -> dispenser_ingredient_cmd_out;
+      conn_ctrl_logic_to_disp_cup: port control_logic.dispense_cup_cmd_out -> dispenser_cup_cmd_out;
+      conn_ctrl_logic_to_display: port control_logic.display_message_out -> display_update_cmd_out;
+      conn_ctrl_logic_to_net_module: port control_logic.network_status_packet_out -> network_packet_to_module_out;
+      conn_ctrl_logic_to_payment_trigger: port control_logic.initiate_payment_out -> trigger_payment_out;
+  end MainControlExecutionProcess.impl;
+
+  -- ==== PROCESSOR ====
+  processor VendingMachineCPU
+  end VendingMachineCPU;
+
+  -- ==== MEMORY ====
+  memory MainSystemMemory
+  end MainSystemMemory;
+
+  -- ==== BUSES ====
+  bus InternalComponentBus -- Magistrala dla wewnętrznych komponentów
+  end InternalComponentBus;
+
+  bus NetworkInterfaceBus -- Magistrala dla modułu sieciowego
+  end NetworkInterfaceBus;
+
+  -- ==== SYSTEM ====
+  system HotBeverageVendingMachineSystem
+  end HotBeverageVendingMachineSystem;
+
+  system implementation HotBeverageVendingMachineSystem.impl
+    subcomponents
+      -- Procesy
+      sensor_handling: process InputSensingProcess.impl;
+      control_execution: process MainControlExecutionProcess.impl;
+
+      -- Sprzęt
+      cpu_controller: processor VendingMachineCPU;
+      system_memory: memory MainSystemMemory;
+
+      -- Urządzenia
+      user_panel: device UserSelectionPanel;
+      payment_device: device PaymentTerminalDevice;
+      temp_sensor: device WaterTemperatureSensorDevice;
+      heater: device HeaterActuatorDevice;
+      dispenser: device DispensingMechanismDevice;
+      inventory_sensor: device InventorySensorDevice;
+      main_display: device MachineDisplay;
+      network_card: device NetworkInterfaceModule;
+
+      -- Magistrale
+      internal_bus: bus InternalComponentBus;
+      network_bus: bus NetworkInterfaceBus;
+
+    connections
+      -- Podłączenie urządzeń do procesu zbierania danych (InputSensingProcess)
+      panel_to_sensors: port user_panel.order_details_out -> sensor_handling.raw_order_in;
+      payment_term_to_sensors: port payment_device.payment_status_out -> sensor_handling.raw_payment_info_in;
+      temp_sens_to_sensors: port temp_sensor.current_temp_out -> sensor_handling.raw_water_temp_in;
+      inv_sens_to_sensors: port inventory_sensor.inventory_levels_out -> sensor_handling.raw_inventory_levels_in;
+
+      -- Podłączenie procesu zbierania danych do procesu sterowania (MainControlExecutionProcess)
+      order_data_flow: port sensor_handling.processed_order_to_logic_out -> control_execution.order_from_sensor_process_in;
+      payment_data_flow: port sensor_handling.payment_info_to_logic_out -> control_execution.payment_from_sensor_process_in;
+      temp_data_flow: port sensor_handling.water_temp_to_logic_out -> control_execution.water_temp_from_sensor_process_in;
+      inventory_data_flow: port sensor_handling.inventory_status_to_logic_out -> control_execution.inventory_from_sensor_process_in;
+      
+      -- Podłączenie modułu sieciowego do procesu sterowania
+      network_cmd_flow: port network_card.command_from_network_out -> control_execution.command_from_network_module_in;
+
+      -- Podłączenie procesu sterowania do urządzeń wykonawczych i interfejsów
+      heater_control_flow: port control_execution.heater_actuator_cmd_out -> heater.heater_control_in;
+      dispenser_ing_control_flow: port control_execution.dispenser_ingredient_cmd_out -> dispenser.dispense_ingredient_cmd_in;
+      dispenser_cup_control_flow: port control_execution.dispenser_cup_cmd_out -> dispenser.dispense_cup_cmd_in;
+      display_update_flow: port control_execution.display_update_cmd_out -> main_display.display_update_in;
+      network_status_flow: port control_execution.network_packet_to_module_out -> network_card.status_to_network_in;
+      payment_trigger_flow: port control_execution.trigger_payment_out -> payment_device.initiate_payment_in;
+      
+    properties
+      -- Powiązanie procesów z procesorem (opcjonalne, ale dobre dla kompletności)
+      Actual_Processor_Binding => (reference (cpu_controller)) applies to sensor_handling, control_execution;
+      -- Powiązanie pamięci (opcjonalne)
+      Actual_Memory_Binding => (reference (system_memory)) applies to sensor_handling, control_execution;
+  end HotBeverageVendingMachineSystem.impl;
+
+end vending_machine;
