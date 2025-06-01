@@ -6,7 +6,7 @@
 
 # Opis projektu
 
-Projekt "Automat do Gorących Napojów" realizowany jest w języku AADL i ma na celu stworzenie uproszczonego modelu systemu sterowania dla maszyny vendingowej. System skupia się na podstawowych funkcjach czasu rzeczywistego, takich jak obsługa użytkownika, kontrola przygotowania napoju oraz monitorowanie stanu urządzenia. Model został zaprojektowany z myślą o przejrzystości i ograniczeniu liczby komponentów do niezbędnego minimum, aby zademonstrować kluczowe aspekty modelowania systemów w AADL.
+Projekt "Automat do Gorących Napojów" realizowany jest w języku AADL i ma na celu stworzenie modelu systemu sterowania dla maszyny vendingowej. System skupia się na podstawowych funkcjach czasu rzeczywistego, takich jak obsługa użytkownika, kontrola przygotowania napoju, monitorowanie stanu urządzenia oraz zapewnienie podstawowych mechanizmów bezpieczeństwa. Model został zaprojektowany z myślą o przejrzystości, demonstrując kluczowe aspekty modelowania systemów w AADL, w tym rozdzielenie odpowiedzialności na dedykowane jednostki przetwarzające.
 
 # Funkcjonalności systemu:
 
@@ -16,42 +16,62 @@ Projekt "Automat do Gorących Napojów" realizowany jest w języku AADL i ma na 
 - Kontrola procesu podgrzewania wody.
 - Wyświetlanie podstawowych statusów i komunikatów dla użytkownika.
 - Monitorowanie kluczowych parametrów (np. temperatura wody, uproszczony stan zapasów).
-- Możliwość wysyłania podstawowych informacji o stanie automatu przez sieć (uproszczona symulacja).
+- Obsługa przycisku awaryjnego zatrzymania.
+- Dedykowane monitorowanie krytycznych parametrów bezpieczeństwa (np. przegrzanie).
+- Możliwość wysyłania zagregowanych informacji o stanie automatu oraz raportów o stanie zdrowia systemu przez sieć (uproszczona symulacja).
 
-# Planowane komponenty projektu:
+# Komponenty modelu:
 
 ### Pakiet
-- `VendingMachine_Pkg` – główny pakiet grupujący wszystkie elementy modelu automatu.
+- `vending_machine` – główny pakiet grupujący wszystkie elementy modelu automatu.
 
 ### System
 - `VendingMachine_Sys` – główny komponent systemowy, integrujący podsystemy automatu.
 
-### Procesor
-- `Control_Cpu` – abstrakcyjny procesor wykonujący logikę sterowania automatem.
+### Procesory
+- `Control_Cpu` – procesor wykonujący główną logikę sterowania automatem oraz obsługę wejścia/wyjścia.
+- `Safety_Cpu` – dedykowany procesor dla krytycznych funkcji bezpieczeństwa.
 
-### Pamięć
-- `Control_Mem` – pamięć operacyjna dla procesora i danych systemu.
+### Pamięci
+- `Control_Mem` – pamięć operacyjna dla `Control_Cpu` i danych systemu.
+- `Safety_Mem` – pamięć operacyjna dla `Safety_Cpu` i danych systemu bezpieczeństwa.
 
-### Magistrala
-- `System_Bus` – pojedyncza magistrala systemowa do komunikacji między kluczowymi komponentami (procesor, pamięć, urządzenia).
+### Magistrale
+- `System_Bus` – główna magistrala systemowa do komunikacji między kluczowymi komponentami.
+- `Network_Bus` – magistrala do komunikacji z modułem sieciowym.
 
-### Dane
-- `Machine_Operational_Data` – zagregowane dane operacyjne, obejmujące wybór użytkownika, odczyty z czujników (temperatura, poziomy), status maszyny oraz komendy dla urządzeń wykonawczych.
+### Typy Danych (przykładowe, w kodzie bardziej szczegółowe)
+- `BeverageOrderData`, `PaymentInfoData`, `WaterConditionData`, `InventoryStatusData`, `MachineDisplayData`, `ExternalCommandData`.
+- `OutgoingNetworkData` – zagregowane dane wysyłane przez sieć.
+- `Safety_Status_Data` – dane o stanie systemu bezpieczeństwa.
 
-### Proces
-- `Control_Logic_Process` – proces odpowiedzialny za główną logikę decyzyjną automatu.
-- `IO_Handling_Process` – proces zarządzający interakcjami z urządzeniami wejścia/wyjścia oraz komunikacją sieciową.
+### Procesy
+- `InputSensingProcess` (na `Control_Cpu`) – proces zbierający dane z sensorów i wejść użytkownika.
+- `MainControlExecutionProcess` (na `Control_Cpu`) – proces wykonujący główną logikę sterowania i komunikację.
+- `Safety_Supervision_Process` (na `Safety_Cpu`) – proces odpowiedzialny za monitorowanie bezpieczeństwa i reakcję na zagrożenia.
 
-### Wątki
-- `Main_Coordinator_Thread` (zawarty w `Control_Logic_Process`) – główny wątek koordynujący, zarządzający stanem automatu i podejmowaniem decyzji.
-- `Device_Interface_Thread` (zawarty w `IO_Handling_Process`) – wątek obsługujący komunikację z fizycznymi czujnikami i urządzeniami wykonawczymi.
-- `Network_Interface_Thread` (zawarty w `IO_Handling_Process`) – wątek odpowiedzialny za uproszczoną komunikację sieciową (np. wysyłanie statusu).
+### Wątki (wybrane kluczowe)
+- W `InputSensingProcess`:
+    - `UserInputMonitorThread`, `PaymentStatusMonitorThread`, `WaterTemperatureMonitorThread`, `InventoryLevelMonitorThread`.
+- W `MainControlExecutionProcess`:
+    - `VendingControlLogicThread` – główny wątek koordynujący, zarządzający stanem automatu.
+    - `NetworkCommandReceiverThread` – wątek odbierający komendy z sieci.
+    - `System_Health_Monitor_Thread` – wątek zbierający informacje o stanie systemu, statusie operacyjnym i generujący zagregowane raporty do wysłania przez sieć.
+- W `Safety_Supervision_Process`:
+    - `Critical_Temperature_Monitor_Thread` – monitoruje temperaturę pod kątem niebezpiecznych wartości.
+    - `Emergency_Stop_Handler_Thread` – obsługuje sygnał z przycisku awaryjnego.
+    - `Safety_Coordinator_Thread` – koordynuje działania systemu bezpieczeństwa.
 
 ### Urządzenia
-- `User_Panel_Device` – zintegrowane urządzenie wejścia/wyjścia dla użytkownika (przyciski wyboru, prosty wyświetlacz statusu).
-- `Heating_Element_Device` – urządzenie wykonawcze odpowiedzialne za podgrzewanie wody.
-- `Multi_Dispenser_Device` – zintegrowane urządzenie wykonawcze do dozowania składników napoju oraz wydawania kubka.
-- `Network_Adapter_Device` – urządzenie reprezentujące fizyczny interfejs sieciowy.
+- `UserSelectionPanel` – panel użytkownika (przyciski, wyświetlacz).
+- `PaymentTerminalDevice` – terminal płatniczy.
+- `WaterTemperatureSensorDevice` – czujnik temperatury wody.
+- `HeaterActuatorDevice` – grzałka (z możliwością awaryjnego wyłączenia).
+- `DispensingMechanismDevice` – mechanizm dozujący (z możliwością awaryjnego wyłączenia).
+- `InventorySensorDevice` – czujnik zapasów.
+- `MachineDisplay` – wyświetlacz statusu.
+- `NetworkInterfaceModule` – moduł interfejsu sieciowego.
+- `EmergencyStopButtonDevice` – przycisk awaryjnego zatrzymania.
 
 # Diagram Systemu
 
