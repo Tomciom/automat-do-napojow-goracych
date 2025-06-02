@@ -2,6 +2,7 @@ package vending_machine
 public
   with Base_Types;
   with Data_Model;
+  with SEI;
 
   data BeverageOrderData
     properties
@@ -46,23 +47,31 @@ public
   device UserSelectionPanel
     features
       order_details_out: out data port BeverageOrderData;
+    properties
+      SEI::GrossWeight => 1.0 kg;
   end UserSelectionPanel;
 
   device PaymentTerminalDevice
     features
       payment_status_out: out data port PaymentInfoData;
       initiate_payment_in: in data port Base_Types::Boolean;
+    properties
+      SEI::GrossWeight => 0.8 kg;
   end PaymentTerminalDevice;
 
   device WaterTemperatureSensorDevice
     features
       current_temp_out: out data port WaterConditionData;
+    properties
+      SEI::GrossWeight => 0.05 kg;
   end WaterTemperatureSensorDevice;
 
   device HeaterActuatorDevice
     features
       heater_control_in: in data port Base_Types::Boolean;
       emergency_off_in: in data port Base_Types::Boolean;
+    properties
+      SEI::GrossWeight => 2.5 kg;
   end HeaterActuatorDevice;
 
   device DispensingMechanismDevice
@@ -70,27 +79,37 @@ public
       dispense_ingredient_cmd_in: in data port BeverageOrderData;
       dispense_cup_cmd_in: in data port Base_Types::Boolean;
       emergency_off_in: in data port Base_Types::Boolean;
+    properties
+      SEI::GrossWeight => 5.0 kg;
   end DispensingMechanismDevice;
 
   device InventorySensorDevice
     features
       inventory_levels_out: out data port InventoryStatusData;
+    properties
+      SEI::GrossWeight => 0.2 kg;
   end InventorySensorDevice;
 
   device MachineDisplay
     features
       display_update_in: in data port MachineDisplayData;
+    properties
+      SEI::GrossWeight => 1.2 kg;
   end MachineDisplay;
 
   device NetworkInterfaceModule
     features
       command_from_network_out: out data port ExternalCommandData;
       status_to_network_in: in data port OutgoingNetworkData;
+    properties
+      SEI::GrossWeight => 0.15 kg;
   end NetworkInterfaceModule;
 
   device EmergencyStopButtonDevice
     features
       emergency_pressed_out: out data port Base_Types::Boolean;
+    properties
+      SEI::GrossWeight => 0.1 kg;
   end EmergencyStopButtonDevice;
 
   thread UserInputMonitorThread
@@ -310,25 +329,39 @@ public
   end SafetySupervisionProcess.impl;
 
   processor Control_Cpu
+    properties
+      SEI::GrossWeight => 0.2 kg;
   end Control_Cpu;
 
   processor Safety_Cpu
+    properties
+      SEI::GrossWeight => 0.2 kg;
   end Safety_Cpu;
 
   memory Control_Mem
+    properties
+      SEI::GrossWeight => 0.1 kg;
   end Control_Mem;
 
   memory Safety_Mem
+    properties
+      SEI::GrossWeight => 0.1 kg;
   end Safety_Mem;
 
   bus System_Bus
+    properties
+      SEI::GrossWeight => 0.5 kg;
   end System_Bus;
 
   bus Network_Bus
+    properties
+      SEI::GrossWeight => 0.2 kg;
   end Network_Bus;
 
 
   system VendingMachine_Sys
+    properties
+      SEI::GrossWeight => 55.0 kg;
   end VendingMachine_Sys;
 
   system implementation VendingMachine_Sys.impl
@@ -389,6 +422,8 @@ public
 
       Actual_Memory_Binding => (reference (main_memory)) applies to sensor_handling, control_execution;
       Actual_Memory_Binding => (reference (safety_memory)) applies to safety_supervision;
+
+      SEI::WeightLimit => 60.0 kg;
 
   end VendingMachine_Sys.impl;
 
