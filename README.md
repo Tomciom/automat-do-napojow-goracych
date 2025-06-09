@@ -79,6 +79,43 @@ Poniżej przedstawiono diagram komponentów systemu automatu do gorących napoj�
 
 ![Diagram automatu do napojów](vending_machine_diagram.jpg)
 
+# Analiza Wagowa
+
+Analiza wagowa jest jednym z kluczowych aspektów analizy właściwości niefunkcjonalnych w AADL. Pozwala ona na weryfikację, czy suma wag poszczególnych komponentów systemu mieści się w zdefiniowanych limitach, co jest kluczowe w projektowaniu systemów o ograniczonych możliwościach nośnych lub przestrzennych. Poniżej przedstawiono wyniki analizy wagowej dla modelu automatu.
+
+### Wagi poszczególnych komponentów:
+
+| Komponent | Nazwa w modelu AADL | Waga (kg) |
+| :--- | :--- | :--- |
+| Magistrala systemowa | `system_bus` | 0,500 |
+| Magistrala sieciowa | `network_bus` | 0,200 |
+| Panel użytkownika | `user_panel` | 1,000 |
+| Terminal płatniczy | `payment_device` | 0,800 |
+| Czujnik temperatury | `temp_sensor` | 0,050 |
+| Grzałka | `heater` | 2,500 |
+| Mechanizm dozujący | `dispenser` | 5,000 |
+| Czujnik zapasów | `inventory_sensor` | 0,200 |
+| Wyświetlacz główny | `main_display` | 1,200 |
+| Karta sieciowa | `network_card` | 0,150 |
+| Przycisk awaryjny | `emergency_button` | 0,100 |
+| Pamięć główna | `main_memory` | 0,100 |
+| Pamięć systemu bezp. | `safety_memory` | 0,100 |
+| Główny procesor | `main_cpu` | 0,200 |
+| Procesor systemu bezp. | `safety_cpu` | 0,200 |
+
+### Podsumowanie i weryfikacja limitów wagowych:
+
+Suma wag jawnie zamodelowanych komponentów sprzętowych wynosi **12,300 kg**.
+
+Narzędzie analityczne zgłosiło ostrzeżenie (`Warning! VendingMachine_Sys_impl_Instance: [G] Sum of weights (12,300 kg) less than gross weight of 55,000 kg`), informując, że suma wag komponentów jest niższa niż zadeklarowana waga brutto całego systemu (`Gross_Weight`). Różnica ta wynika z faktu, że waga brutto **55,000 kg** uwzględnia masę obudowy, wewnętrznej ramy, hydrauliki i innych elementów konstrukcyjnych, które nie zostały zamodelowane jako oddzielne komponenty z własną wagą. W dalszej analizie narzędzie poprawnie wykorzystuje zadeklarowaną wagę brutto.
+
+Ostateczna analiza porównuje wagę brutto systemu z jego limitem wagowym (`Weight_Limit`):
+
+- **Całkowita waga systemu (Gross Weight): 55,000 kg**
+- **Maksymalny limit wagi (Weight Limit): 60,000 kg**
+- **Rezerwa wagowa (Weight Slack): 8,3 %**
+
+**Wniosek:** System **spełnia** założone wymagania wagowe, ponieważ jego całkowita masa (55,000 kg) nie przekracza zdefiniowanego limitu (60,000 kg), pozostawiając 8,3% rezerwy.
 
 # Bibliografia:
 
